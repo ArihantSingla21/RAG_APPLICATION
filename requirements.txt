@@ -1,0 +1,6 @@
+pandas 
+numpy
+llama_index
+langchain
+chroma-db
+-e .
