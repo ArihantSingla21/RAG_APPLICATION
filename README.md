@@ -1,27 +1,43 @@
 # RAG Application
 
 ## Overview
-This RAG (Retrieval-Augmented Generation) application leverages advanced natural language processing techniques to enhance the generation of text by retrieving relevant information from a knowledge base. Built with LlamaIndex and LangChain, it provides a robust foundation for creating intelligent document retrieval and question-answering systems.
+This RAG (Retrieval-Augmented Generation) application leverages advanced natural language processing techniques to enhance text generation by retrieving relevant information from a knowledge base. Built with LlamaIndex and integrating with multiple LLM providers, it provides a robust foundation for creating intelligent document retrieval and question-answering systems.
 
 ## Project Structure
 ```
 RAG_Application/
 ├── src/
-│   ├── logger.py      # Logging configuration and utilities
-│   └── utils.py       # Utility functions and helpers
-├── logs/              # Directory for application logs
-├── requirements.txt   # Project dependencies
+│ ├── components/
+│ │ ├── LLM.py # LLM client implementations
+│ │ ├── model.py # RAG model implementation
+│ │ ├── prompts.py # Prompt templates and management
+│ │ └── init.py # Package initialization
+│ ├── logger.py # Logging configuration and utilities
+│ ├── utils.py # Utility functions and helpers
+│ └── init.py # Package initialization
+├── logs/ # Directory for application logs
+├── requirements.txt # Project dependencies
+└── setup.py # Package setup configuration
 └── setup.py          # Package setup configuration
 ```
 
 ## Features
-- **Advanced Retrieval System**: Utilizes LlamaIndex for efficient document indexing and retrieval
-- **Flexible Architecture**: Built on LangChain for extensible language model interactions
-- **Vector Storage**: Integration with ChromaDB for efficient vector storage and similarity search
-- **Robust Logging**: Comprehensive logging system with timestamped logs
-- **Data Processing**: Integrated with Pandas and NumPy for efficient data handling
-- **Scalable Design**: Built to handle large document collections efficiently
-- **Customizable Embeddings**: Support for various embedding models and configurations
+- **Multi-Backend LLM Support**: 
+  - Hugging Face API integration
+  - Local model inference
+  - OpenAI-compatible API support
+- **Centralized Prompt Management**:
+  - System prompts for different use cases
+  - Query prompt templates
+  - Easy customization and extension
+- **Vector Storage & Retrieval**:
+  - Integration with ChromaDB
+  - Efficient similarity search
+  - Persistent storage for embeddings
+- **Robust Logging System**:
+  - Comprehensive logging with timestamps
+  - Multiple log levels
+  - Automatic log directory management
 
 ## Prerequisites
 Before you begin, ensure you have the following installed:
@@ -38,93 +54,137 @@ Before you begin, ensure you have the following installed:
    cd RAG_Application
    ```
 
-2. Create a virtual environment (recommended):
+2. Create and activate virtual environment:
    ```bash
    python -m venv venv
    source venv/bin/activate  # On Windows use: venv\Scripts\activate
    ```
 
-3. Install the required dependencies:
+3. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
 
-## Key Dependencies
-- **LlamaIndex (v0.9.x)**: Core framework for building and querying knowledge bases
-  - Provides document processing and indexing capabilities
-  - Supports various index structures for efficient retrieval
-- **LangChain**: Framework for developing applications with LLMs
-  - Enables creation of complex language model chains
-  - Provides tools for prompt management and output parsing
-- **ChromaDB**: Vector database for storing and retrieving embeddings
-  - Efficient similarity search capabilities
-  - Persistent storage for embeddings
-- **Pandas & NumPy**: Data processing libraries
-  - Used for structured data handling
-  - Provides numerical computing capabilities
-- Additional dependencies are listed in `requirements.txt`
+4. Create package structure:
+   ```bash
+   touch src/__init__.py
+   touch src/components/__init__.py
+   ```
 
 ## Configuration
-1. **Environment Variables**:
-   Create a `.env` file in the root directory with the following variables:
-   ```
-   OPENAI_API_KEY=your_api_key_here
-   CHROMA_DB_DIR=path/to/chromadb
-   LOG_LEVEL=INFO
-   ```
 
-2. **Logging Configuration**:
-   - Logs are automatically created in the `logs` directory
-   - Each log file is named with timestamp format: `MM_DD_YYYY_HH_MM_SS.log`
-   - Log level can be configured in the environment variables
+### Environment Variables
+Create a `.env` file:
+```
+HUGGINGFACE_API_KEY=your_hf_key_here
+OPENAI_API_KEY=your_openai_key_here  # Optional
+CHROMA_DB_DIR=path/to/chromadb
+LOG_LEVEL=INFO
+```
 
 ## Usage
 
-### 1. Basic Setup
+### 1. Basic RAG Model Setup
 ```python
-from src.utils import setup_environment
-from src.logger import logging
+from src.components.model import RAGModel
 
-# Initialize the environment
-setup_environment()
-logging.info("Environment initialized successfully")
+# Initialize RAG model
+model = RAGModel(
+    model_key="mistral-7b",
+    backend="api",
+    system_prompt_type="rag",
+    query_prompt_type="default"
+)
+
+# Query the model
+response = model.query("Your question here")
+print(response)
 ```
 
-### 2. Document Processing
+### 2. Direct LLM Client Usage
 ```python
-# Example code for processing documents will go here
-# This section will be updated as the project develops
+from src.components.LLM import get_llm_client
+
+# Initialize LLM client
+client = get_llm_client(
+    model_key="mistral-7b",
+    backend="api"
+)
+
+# Get completion
+response = client.complete("Your prompt here")
+print(response)
 ```
 
-### 3. Running Queries
+### 3. Working with Prompts
 ```python
-# Example code for running queries will go here
-# This section will be updated as the project develops
+from src.components.prompts import PromptTemplates
+
+# Get system prompt
+system_prompt = PromptTemplates.get_system_prompt("rag")
+
+# Get query prompt
+query_prompt = PromptTemplates.get_query_prompt("default")
 ```
 
-## Logging System
-The application includes a comprehensive logging system:
+## Supported Models
 
-1. **Log File Structure**:
-   - Timestamp-based naming: `MM_DD_YYYY_HH_MM_SS.log`
-   - Located in the `logs` directory
-   - Automatic directory creation if not exists
+### Hugging Face Models
+- `mistral-7b`: Mistral 7B Instruct
+- `yi-6b`: Yi 6B Chat
+- `phi-2`: Microsoft Phi-2
+- `zephyr-7b`: Hugging Face Zephyr 7B
 
-2. **Log Format**:
-   ```
-   [timestamp] line_number name - level - message
-   ```
+### OpenAI-Compatible Models
+- `gpt-3.5-turbo`
+- `gpt-4`
+- `claude-3-opus`
+- `claude-3-sonnet`
 
-3. **Log Levels**:
-   - INFO: General operational messages
-   - ERROR: Error conditions
-   - WARNING: Warning messages
-   - DEBUG: Detailed debugging information
+## Prompt Types
+
+### System Prompts
+- `rag`: For retrieval-augmented generation
+- `chat`: For general conversation
+- `summarization`: For document summarization
+- `code`: For code-related tasks
+
+### Query Prompts
+- `default`: Standard query template
+- Custom templates supported
 
 ## Error Handling
-- Comprehensive error handling for API failures
-- Graceful degradation when services are unavailable
-- Detailed error logging for debugging
+
+### Common Issues and Solutions
+
+1. **Import Errors**:
+   ```python
+   import os, sys
+   sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+   ```
+
+2. **API Issues**:
+   - Verify API keys in environment variables
+   - Check model availability and access permissions
+   - Ensure stable internet connection
+
+3. **Prompt Errors**:
+   - Validate prompt type existence
+   - Check prompt template formatting
+   - Ensure proper initialization of PromptTemplates
+
+## Logging System
+
+### Log Levels
+- `INFO`: General operational messages
+- `ERROR`: Error conditions
+- `WARNING`: Warning messages
+- `DEBUG`: Detailed debugging information
+
+### Log Format
+```
+[timestamp] line_number name - level - message
+```
 
 ## Performance Optimization
 - Efficient document indexing strategies
@@ -166,4 +226,14 @@ For any queries or support, please:
 3. Join our community discussions
 
 ---
-**Note**: This project is under active development. Features and documentation will be updated regularly.
+**Note**: This project is under active development. Current implementation focuses on:
+- Multi-backend LLM integration
+- Centralized prompt management
+- Basic RAG functionality
+- Logging and error handling
+
+Future updates will include:
+- Enhanced document processing
+- Additional model support
+- Advanced retrieval strategies
+- Performance optimizations
